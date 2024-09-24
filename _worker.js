@@ -1,11 +1,13 @@
-/**
-* @ts-nocheck   <!--GAMFC-->version base on commit 43fad05dcdae3b723c53c226f8181fc5bd47223e, time is 2023-06-22 15:20:02 UTC<!--GAMFC-END-->.
-* Last Update: 4:20 UTC - Thursday, 23 September 2024, By @icloudflare-ux
-* Many thanks to github.com/icloudflare-ux
-*/
+// @ts-nocheck
+// <!--GAMFC-->version base on commit 43fad05dcdae3b723c53c226f8181fc5bd47223e, time is 2023-06-22 15:20:02 UTC<!--GAMFC-END-->.
+// @ts-ignore
+// https://github.com/bia-pain-bache/BPB-Worker-Panel
+
 import { connect } from 'cloudflare:sockets';
+
 // How to generate your own UUID:
 // https://www.uuidgenerator.net/
+
 let userID = '89b3cbba-e6ac-485a-9481-976a0415eab9';
 
 // https://www.nslookup.io/domains/bpb.radically.pro/dns-records/
