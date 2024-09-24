@@ -7,20 +7,19 @@ import { connect } from 'cloudflare:sockets';
 
 // How to generate your own UUID:
 // https://www.uuidgenerator.net/
-
 let userID = '89b3cbba-e6ac-485a-9481-976a0415eab9';
 
-// https://www.nslookup.io/domains/bpb.radically.pro/dns-records/
-const proxyIPs= ['bpb.radically.pro'];
+// https://www.nslookup.io/domains/bpb.yousef.isegaro.com/dns-records/
+const proxyIPs= ['bpb.yousef.isegaro.com'];
 const defaultHttpPorts = ['80', '8080', '2052', '2082', '2086', '2095', '8880'];
 const defaultHttpsPorts = ['443', '8443', '2053', '2083', '2087', '2096'];
 let proxyIP = proxyIPs[Math.floor(Math.random() * proxyIPs.length)];
 let dohURL = 'https://cloudflare-dns.com/dns-query';
-let trojanPassword = `M2rayNG`;
+let trojanPassword = `bpb-trojan`;
 // https://emn178.github.io/online-tools/sha224.html
 // https://www.atatus.com/tools/sha224-to-hash
-let hashPassword = '465716058836739c74b8540bdcd3b3d2cc39c3252be0df623f289946';
-let panelVersion = 'v2.5.6';
+let hashPassword = 'b5d0a5f7ff7aac227bc68b55ae713131ffdf605ca0da52cce182d513';
+let panelVersion = '2.5.6';
 
 if (!isValidUUID(userID)) {
     throw new Error('UUID is not valid');
@@ -160,12 +159,12 @@ export default {
 
                     case '/panel':
 
-                        if (typeof env.M2rayNG !== 'object') {
+                        if (typeof env.bpb !== 'object') {
                             const errorPage = renderErrorPage('KV Dataset is not properly set!', null, true);
                             return new Response(errorPage, { status: 200, headers: {'Content-Type': 'text/html'}});
                         }
 
-                        const pwd = await env.M2rayNG.get('pwd');
+                        const pwd = await env.bpb.get('pwd');
                         const isAuth = await Authenticate(request, env); 
                         
                         if (request.method === 'POST') {     
@@ -177,7 +176,7 @@ export default {
                         }
                         
                         if (pwd && !isAuth) return Response.redirect(`${url.origin}/login`, 302);
-                        const proxySettings = await env.M2rayNG.get('proxySettings', {type: 'json'});
+                        const proxySettings = await env.bpb.get('proxySettings', {type: 'json'});
                         const isUpdated = panelVersion === proxySettings?.panelVersion;
                         if (!proxySettings || !isUpdated) await updateDataset(env);
                         const fragConfs = await getFragmentConfigs(env, host, 'nekoray');
@@ -198,7 +197,7 @@ export default {
                                                       
                     case '/login':
 
-                        if (typeof env.M2rayNG !== 'object') {
+                        if (typeof env.bpb !== 'object') {
                             const errorPage = renderErrorPage('KV Dataset is not properly set!', null, true);
                             return new Response(errorPage, { status: 200, headers: {'Content-Type': 'text/html'}});
                         }
@@ -206,15 +205,15 @@ export default {
                         const loginAuth = await Authenticate(request, env);
                         if (loginAuth) return Response.redirect(`${url.origin}/panel`, 302);
 
-                        let secretKey = await env.M2rayNG.get('secretKey');
+                        let secretKey = await env.bpb.get('secretKey');
                         if (!secretKey) {
                             secretKey = generateSecretKey();
-                            await env.M2rayNG.put('secretKey', secretKey);
+                            await env.bpb.put('secretKey', secretKey);
                         }
 
                         if (request.method === 'POST') {
                             const password = await request.text();
-                            const savedPass = await env.M2rayNG.get('pwd');
+                            const savedPass = await env.bpb.get('pwd');
 
                             if (password === savedPass) {
                                 const jwtToken = generateJWTToken(password, secretKey);
@@ -259,12 +258,12 @@ export default {
 
                     case '/panel/password':
 
-                        const oldPwd = await env.M2rayNG.get('pwd');
+                        const oldPwd = await env.bpb.get('pwd');
                         let passAuth = await Authenticate(request, env);
                         if (oldPwd && !passAuth) return new Response('Unauthorized!', { status: 401 });           
                         const newPwd = await request.text();
                         if (newPwd === oldPwd) return new Response('Please enter a new Password!', { status: 400 });
-                        await env.M2rayNG.put('pwd', newPwd);
+                        await env.bpb.put('pwd', newPwd);
 
                         return new Response('Success', {
                             status: 200,
@@ -1113,22 +1112,22 @@ async function handleUDPOutBound(webSocket, vlessResponseHeader, log) {
 
 function generateRemark(index, port, protocol, fragType) {
     let remark = '';
-    const type = fragType ? ' ⇢F' : '';
+    const type = fragType ? ' F' : '';
     switch (index) {
         case 0:
         case 1:
-            remark = `⇢${protocol}${type} ⇢Ðoϻɑiͷ  ${index + 1} ⇢${port}`;
+            remark = `💦 ${protocol}${type} - Domain ${index + 1} : ${port}`;
             break;
         case 2:
         case 3:
-            remark = `⇢${protocol}${type} ⇢IPV4 ${index - 1} ⇢${port}`;
+            remark = `💦 ${protocol}${type} - IPv4 ${index - 1} : ${port}`;
             break;
         case 4:
         case 5:
-            remark = `⇢${protocol}${type} ⇢IPV6 ${index - 3} ⇢${port}`;
+            remark = `💦 ${protocol}${type} - IPv6 ${index - 3} : ${port}`;
             break;
         default:
-            remark = `⇢${protocol}${type} ⇢CLEAN IP ${index - 5} ⇢${port}`;
+            remark = `💦 ${protocol}${type} - Clean IP ${index - 5} : ${port}`;
             break;
     }
 
@@ -1182,7 +1181,7 @@ async function updateDataset (env, Settings) {
     let currentProxySettings = {};
 
     try {
-        currentProxySettings = await env.M2rayNG.get("proxySettings", {type: 'json'});
+        currentProxySettings = await env.bpb.get("proxySettings", {type: 'json'});
     } catch (error) {
         console.log(error);
         throw new Error(`An error occurred while getting current values - ${error}`);
@@ -1211,10 +1210,10 @@ async function updateDataset (env, Settings) {
         trojanConfigs: Settings ? Settings.get('trojanConfigs') : currentProxySettings?.trojanConfigs || false,
         outProxy: Settings ? chainProxy : currentProxySettings?.outProxy || '',
         outProxyParams: chainProxy ? extractChainProxyParams(chainProxy) : currentProxySettings?.outProxyParams || '',
-        wowEndpoint: Settings ? Settings.get('wowEndpoint')?.replaceAll(' ', '') : currentProxySettings?.wowEndpoint || '188.114.98.1:1010,162.159.192.100:1018,162.159.192.0:955,188.114.97.170:2371,162.159.192.1:988',
-        warpEndpoints: Settings ? Settings.get('warpEndpoints')?.replaceAll(' ', '') : currentProxySettings?.warpEndpoints || '188.114.98.1:1010,162.159.192.100:1018,162.159.192.0:955,188.114.97.170:2371,162.159.192.1:988',
+        wowEndpoint: Settings ? Settings.get('wowEndpoint')?.replaceAll(' ', '') : currentProxySettings?.wowEndpoint || 'engage.cloudflareclient.com:2408',
+        warpEndpoints: Settings ? Settings.get('warpEndpoints')?.replaceAll(' ', '') : currentProxySettings?.warpEndpoints || 'engage.cloudflareclient.com:2408',
         hiddifyNoiseMode: Settings ? Settings.get('hiddifyNoiseMode') : currentProxySettings?.hiddifyNoiseMode || 'm4',
-        M2rayNGNoiseMode: Settings ? Settings.get('M2rayNGNoiseMode') : currentProxySettings?.M2rayNGNoiseMode || 'quic',
+        nikaNGNoiseMode: Settings ? Settings.get('nikaNGNoiseMode') : currentProxySettings?.nikaNGNoiseMode || 'quic',
         noiseCountMin: Settings ? Settings.get('noiseCountMin') : currentProxySettings?.noiseCountMin || '10',
         noiseCountMax: Settings ? Settings.get('noiseCountMax') : currentProxySettings?.noiseCountMax || '15',
         noiseSizeMin: Settings ? Settings.get('noiseSizeMin') : currentProxySettings?.noiseSizeMin || '5',
@@ -1226,7 +1225,7 @@ async function updateDataset (env, Settings) {
     };
 
     try {    
-        await env.M2rayNG.put("proxySettings", JSON.stringify(proxySettings));          
+        await env.bpb.put("proxySettings", JSON.stringify(proxySettings));          
     } catch (error) {
         console.log(error);
         throw new Error(`An error occurred while updating KV - ${error}`);
@@ -1316,7 +1315,7 @@ function generateSecretKey () {
 async function Authenticate (request, env) {
     
     try {
-        const secretKey = await env.M2rayNG.get('secretKey');
+        const secretKey = await env.bpb.get('secretKey');
         const cookie = request.headers.get('Cookie');
         const cookieMatch = cookie ? cookie.match(/(^|;\s*)jwtToken=([^;]*)/) : null;
         const token = cookieMatch ? cookieMatch.pop() : null;
@@ -1353,9 +1352,9 @@ async function renderHomePage (env, hostName, fragConfigs) {
     let password = '';
     
     try {
-        proxySettings = await env.M2rayNG.get('proxySettings', {type: 'json'});
-        warpConfigs = await env.M2rayNG.get('warpConfigs', {type: 'json'});
-        password = await env.M2rayNG.get('pwd');
+        proxySettings = await env.bpb.get('proxySettings', {type: 'json'});
+        warpConfigs = await env.bpb.get('warpConfigs', {type: 'json'});
+        password = await env.bpb.get('pwd');
     } catch (error) {
         console.log(error);
         throw new Error(`An error occurred while rendering home page - ${error}`);
@@ -1384,7 +1383,7 @@ async function renderHomePage (env, hostName, fragConfigs) {
         wowEndpoint,
         warpEndpoints,
         hiddifyNoiseMode,
-        M2rayNGNoiseMode,
+        nikaNGNoiseMode,
         noiseCountMin,
         noiseCountMax,
         noiseSizeMin,
@@ -1406,11 +1405,11 @@ async function renderHomePage (env, hostName, fragConfigs) {
             <tr>
                 <td>
                     ${config.address === 'Best-Ping' 
-                        ? `<div  style="justify-content: center;"><span><b>🚀 M2rayNG F - Best-Ping 💥</b></span></div>` 
+                        ? `<div  style="justify-content: center;"><span><b>💦 BPB F - Best-Ping 💥</b></span></div>` 
                         : config.address === 'WorkerLess'
-                            ? `<div  style="justify-content: center;"><span><b>🚀 M2rayNG F - WorkerLess ⭐</b></span></div>`
+                            ? `<div  style="justify-content: center;"><span><b>💦 BPB F - WorkerLess ⭐</b></span></div>`
                             : config.address === 'Best-Fragment'
-                                ? `<div  style="justify-content: center;"><span><b>🚀 M2rayNG F - Best-Fragment 😎</b></span></div>`
+                                ? `<div  style="justify-content: center;"><span><b>💦 BPB F - Best-Fragment 😎</b></span></div>`
                                 : config.address
                     }
                 </td>
@@ -1449,7 +1448,7 @@ async function renderHomePage (env, hostName, fragConfigs) {
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>M2rayNG Panel ${panelVersion}</title>
+        <title>BPB Panel ${panelVersion}</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 		<style>
@@ -1666,7 +1665,7 @@ async function renderHomePage (env, hostName, fragConfigs) {
 	</head>
 	
 	<body>
-		<h1>M2rayNG Panel <span style="font-size: smaller;">${panelVersion}</span> �</h1>
+		<h1>BPB Panel <span style="font-size: smaller;">${panelVersion}</span> 💦</h1>
 		<div class="form-container">
             <form id="configForm">
                 <h2>VLESS/TROJAN SETTINGS ⚙️</h2>
@@ -1824,11 +1823,11 @@ async function renderHomePage (env, hostName, fragConfigs) {
                         value="${hiddifyNoiseMode}" required>
 				</div>
                 <div class="form-control">
-					<label for="M2rayNGNoiseMode">😵‍💫 M2rayNG Mode</label>
-					<input type="text" id="M2rayNGNoiseMode" name="M2rayNGNoiseMode" 
+					<label for="nikaNGNoiseMode">😵‍💫 NikaNG Mode</label>
+					<input type="text" id="nikaNGNoiseMode" name="nikaNGNoiseMode" 
                         pattern="^(none|quic|random|[0-9A-Fa-f]+)$" 
                         title="Enter 'none', 'quic', 'random', or any HEX string like 'ee0000000108aaaa'"
-                        value="${M2rayNGNoiseMode}" required>
+                        value="${nikaNGNoiseMode}" required>
 				</div>
                 <div class="form-control">
 					<label for="noiseCountMin">🎚️ Noise Count</label>
@@ -1882,7 +1881,7 @@ async function renderHomePage (env, hostName, fragConfigs) {
                             </div>
                             <div>
                                 <span class="material-symbols-outlined symbol">verified</span>
-                                <span>M2rayNG</span>
+                                <span>NikaNG</span>
                             </div>
                             <div>
                                 <span class="material-symbols-outlined symbol">verified</span>
@@ -1914,10 +1913,10 @@ async function renderHomePage (env, hostName, fragConfigs) {
                             </div>
                         </td>
 						<td>
-                            <button onclick="openQR('https://${hostName}/sub/${userID}#M2rayNG-Normal', 'Normal Subscription')" style="margin-bottom: 8px;">
+                            <button onclick="openQR('https://${hostName}/sub/${userID}#BPB-Normal', 'Normal Subscription')" style="margin-bottom: 8px;">
                                 QR Code&nbsp;<span class="material-symbols-outlined">qr_code</span>
                             </button>
-                            <button onclick="copyToClipboard('https://${hostName}/sub/${userID}#M2rayNG-Normal', false)">
+                            <button onclick="copyToClipboard('https://${hostName}/sub/${userID}#BPB-Normal', false)">
                                 Copy Sub<span class="material-symbols-outlined">format_list_bulleted</span>
                             </button>
                         </td>
@@ -1938,7 +1937,7 @@ async function renderHomePage (env, hostName, fragConfigs) {
                             </div>
                         </td>
 						<td>
-                            <button onclick="copyToClipboard('https://${hostName}/sub/${userID}?app=singbox#M2rayNG-Normal', false)">
+                            <button onclick="copyToClipboard('https://${hostName}/sub/${userID}?app=singbox#BPB-Normal', false)">
                                 Copy Sub<span class="material-symbols-outlined">format_list_bulleted</span>
                             </button>
 						</td>
@@ -1951,10 +1950,10 @@ async function renderHomePage (env, hostName, fragConfigs) {
                             </div>
                         </td>
                         <td>
-                            <button onclick="openQR('sing-box://import-remote-profile?url=https://${hostName}/sub/${userID}?app=sfa#M2rayNG-Normal', 'Normal Subscription')" style="margin-bottom: 8px;">
+                            <button onclick="openQR('sing-box://import-remote-profile?url=https://${hostName}/sub/${userID}?app=sfa#BPB-Normal', 'Normal Subscription')" style="margin-bottom: 8px;">
                                 QR Code&nbsp;<span class="material-symbols-outlined">qr_code</span>
                             </button>
-                            <button onclick="copyToClipboard('https://${hostName}/sub/${userID}?app=sfa#M2rayNG-Normal', false)">
+                            <button onclick="copyToClipboard('https://${hostName}/sub/${userID}?app=sfa#BPB-Normal', false)">
                                 Copy Sub<span class="material-symbols-outlined">format_list_bulleted</span>
                             </button>
                         </td>
@@ -1979,10 +1978,10 @@ async function renderHomePage (env, hostName, fragConfigs) {
                             </div>
                         </td>
                         <td>
-                            <button onclick="openQR('https://${hostName}/sub/${userID}?app=clash#M2rayNG-Normal', 'Normal Subscription')" style="margin-bottom: 8px;">
+                            <button onclick="openQR('https://${hostName}/sub/${userID}?app=clash#BPB-Normal', 'Normal Subscription')" style="margin-bottom: 8px;">
                                 QR Code&nbsp;<span class="material-symbols-outlined">qr_code</span>
                             </button>
-                            <button onclick="copyToClipboard('https://${hostName}/sub/${userID}?app=clash#M2rayNG-Normal', false)">
+                            <button onclick="copyToClipboard('https://${hostName}/sub/${userID}?app=clash#BPB-Normal', false)">
                                 Copy Sub<span class="material-symbols-outlined">format_list_bulleted</span>
                             </button>
                         </td>
@@ -2004,7 +2003,7 @@ async function renderHomePage (env, hostName, fragConfigs) {
                             </div>
                             <div>
                                 <span class="material-symbols-outlined symbol">verified</span>
-                                <span>M2rayNG</span>
+                                <span>NikaNG</span>
                             </div>
                             <div>
                                 <span class="material-symbols-outlined symbol">verified</span>
@@ -2024,10 +2023,10 @@ async function renderHomePage (env, hostName, fragConfigs) {
                             </div>
                         </td>
                         <td>
-                            <button onclick="openQR('https://${hostName}/fragsub/${userID}#M2rayNG Fragment', 'Fragment Subscription')" style="margin-bottom: 8px;">
+                            <button onclick="openQR('https://${hostName}/fragsub/${userID}#BPB Fragment', 'Fragment Subscription')" style="margin-bottom: 8px;">
                                 QR Code&nbsp;<span class="material-symbols-outlined">qr_code</span>
                             </button>
-                            <button onclick="copyToClipboard('https://${hostName}/fragsub/${userID}#M2rayNG Fragment', true)">
+                            <button onclick="copyToClipboard('https://${hostName}/fragsub/${userID}#BPB Fragment', true)">
                                 Copy Sub<span class="material-symbols-outlined">format_list_bulleted</span>
                             </button>
                         </td>
@@ -2057,10 +2056,10 @@ async function renderHomePage (env, hostName, fragConfigs) {
                             </div>
                         </td>
 						<td>
-                            <button onclick="openQR('https://${hostName}/warpsub/${userID}?app=xray#M2rayNG-Warp', 'Warp Subscription')" style="margin-bottom: 8px;">
+                            <button onclick="openQR('https://${hostName}/warpsub/${userID}?app=xray#BPB-Warp', 'Warp Subscription')" style="margin-bottom: 8px;">
                                 QR Code&nbsp;<span class="material-symbols-outlined">qr_code</span>
                             </button>
-                            <button onclick="copyToClipboard('https://${hostName}/warpsub/${userID}?app=xray#M2rayNG-Warp', false)">
+                            <button onclick="copyToClipboard('https://${hostName}/warpsub/${userID}?app=xray#BPB-Warp', false)">
                                 Copy Sub<span class="material-symbols-outlined">format_list_bulleted</span>
                             </button>
                         </td>
@@ -2077,10 +2076,10 @@ async function renderHomePage (env, hostName, fragConfigs) {
                             </div>
                         </td>
 						<td>
-                            <button onclick="openQR('sing-box://import-remote-profile?url=https://${hostName}/warpsub/${userID}?app=singbox#M2rayNG-Warp', 'Warp Subscription')" style="margin-bottom: 8px;">
+                            <button onclick="openQR('sing-box://import-remote-profile?url=https://${hostName}/warpsub/${userID}?app=singbox#BPB-Warp', 'Warp Subscription')" style="margin-bottom: 8px;">
                                 QR Code&nbsp;<span class="material-symbols-outlined">qr_code</span>
                             </button>
-                            <button onclick="copyToClipboard('https://${hostName}/warpsub/${userID}?app=singbox#M2rayNG-Warp', false)">
+                            <button onclick="copyToClipboard('https://${hostName}/warpsub/${userID}?app=singbox#BPB-Warp', false)">
                                 Copy Sub<span class="material-symbols-outlined">format_list_bulleted</span>
                             </button>
 						</td>
@@ -2105,10 +2104,10 @@ async function renderHomePage (env, hostName, fragConfigs) {
                             </div>
                         </td>
                         <td>
-                            <button onclick="openQR('https://${hostName}/warpsub/${userID}?app=clash#M2rayNG-WARP', 'Warp Subscription')" style="margin-bottom: 8px;">
+                            <button onclick="openQR('https://${hostName}/warpsub/${userID}?app=clash#BPB-WARP', 'Warp Subscription')" style="margin-bottom: 8px;">
                                 QR Code&nbsp;<span class="material-symbols-outlined">qr_code</span>
                             </button>
-                            <button onclick="copyToClipboard('https://${hostName}/warpsub/${userID}?app=clash#M2rayNG-WARP', false)">
+                            <button onclick="copyToClipboard('https://${hostName}/warpsub/${userID}?app=clash#BPB-WARP', false)">
                                 Copy Sub<span class="material-symbols-outlined">format_list_bulleted</span>
                             </button>
                         </td>
@@ -2126,7 +2125,7 @@ async function renderHomePage (env, hostName, fragConfigs) {
                         <td>
                             <div>
                                 <span class="material-symbols-outlined symbol">verified</span>
-                                <span>M2rayNG</span>
+                                <span>NikaNG</span>
                             </div>
                             <div>
                                 <span class="material-symbols-outlined symbol">verified</span>
@@ -2138,10 +2137,10 @@ async function renderHomePage (env, hostName, fragConfigs) {
                             </div>
                         </td>
 						<td>
-                            <button onclick="openQR('https://${hostName}/warpsub/${userID}?app=M2rayNG#M2rayNG-Warp-Pro', 'Warp Pro Subscription')" style="margin-bottom: 8px;">
+                            <button onclick="openQR('https://${hostName}/warpsub/${userID}?app=nikang#BPB-Warp-Pro', 'Warp Pro Subscription')" style="margin-bottom: 8px;">
                                 QR Code&nbsp;<span class="material-symbols-outlined">qr_code</span>
                             </button>
-                            <button onclick="copyToClipboard('https://${hostName}/warpsub/${userID}?app=M2rayNG#M2rayNG-Warp-Pro', false)">
+                            <button onclick="copyToClipboard('https://${hostName}/warpsub/${userID}?app=nikang#BPB-Warp-Pro', false)">
                                 Copy Sub<span class="material-symbols-outlined">format_list_bulleted</span>
                             </button>
                         </td>
@@ -2154,10 +2153,10 @@ async function renderHomePage (env, hostName, fragConfigs) {
                             </div>
                         </td>
 						<td>
-                            <button onclick="openQR('sing-box://import-remote-profile?url=https://${hostName}/warpsub/${userID}?app=hiddify#M2rayNG-Warp-Pro', 'Warp Pro Subscription')" style="margin-bottom: 8px;">
+                            <button onclick="openQR('sing-box://import-remote-profile?url=https://${hostName}/warpsub/${userID}?app=hiddify#BPB-Warp-Pro', 'Warp Pro Subscription')" style="margin-bottom: 8px;">
                                 QR Code&nbsp;<span class="material-symbols-outlined">qr_code</span>
                             </button>
-                            <button onclick="copyToClipboard('https://${hostName}/warpsub/${userID}?app=hiddify#M2rayNG-Warp-Pro', false)">
+                            <button onclick="copyToClipboard('https://${hostName}/warpsub/${userID}?app=hiddify#BPB-Warp-Pro', false)">
                                 Copy Sub<span class="material-symbols-outlined">format_list_bulleted</span>
                             </button>
 						</td>
@@ -2204,7 +2203,7 @@ async function renderHomePage (env, hostName, fragConfigs) {
             <hr>
             <div class="footer">
                 <i class="fa fa-github" style="font-size:36px; margin-right: 10px;"></i>
-                <a class="link" href="https://github.com/icloudflare-ux/Pro-Panel" target="_blank">Github</a>
+                <a class="link" href="https://github.com/bia-pain-bache/BPB-Worker-Panel" target="_blank">Github</a>
                 <button id="openModalBtn" class="button">Change Password</button>
                 <button type="button" id="logout" style="background: none; margin: 0; border: none; cursor: pointer;">
                     <i class="fa fa-power-off fa-2x" aria-hidden="true"></i>
@@ -2670,7 +2669,7 @@ async function renderLoginPage () {
     </head>
     <body>
         <div class="container">
-            <h1>M2rayNG Panel <span style="font-size: smaller;">${panelVersion}</span> �</h1>
+            <h1>BPB Panel <span style="font-size: smaller;">${panelVersion}</span> 💦</h1>
             <div class="form-container">
                 <h2>User Login</h2>
                 <form id="loginForm">
@@ -2741,10 +2740,10 @@ function renderErrorPage (message, error, refer) {
 
     <body>
         <div id="error-container">
-            <h1>M2rayNG Panel <span style="font-size: smaller;">${panelVersion}</span> �</h1>
+            <h1>BPB Panel <span style="font-size: smaller;">${panelVersion}</span> 💦</h1>
             <div id="error-message">
                 <h2>${message} ${refer 
-                    ? 'Please try again or refer to <a href="https://github.com/icloudflare-ux/Pro-Panel/blob/main/README.md">documents</a>' 
+                    ? 'Please try again or refer to <a href="https://github.com/bia-pain-bache/BPB-Worker-Panel/blob/main/README.md">documents</a>' 
                     : ''}
                 </h2>
                 <p><b>${error ? `⚠️ ${error}` : ''}</b></p>
@@ -2761,7 +2760,7 @@ async function fetchWgConfig (env, warpKeys) {
     const apiBaseUrl = 'https://api.cloudflareclient.com/v0a4005/reg';
 
     try {
-        proxySettings = await env.M2rayNG.get('proxySettings', {type: 'json'});
+        proxySettings = await env.bpb.get('proxySettings', {type: 'json'});
     } catch (error) {
         console.log(error);
         throw new Error(`An error occurred while getting warp configs - ${error}`);
@@ -2820,14 +2819,14 @@ async function fetchWgConfig (env, warpKeys) {
         }
     }
     
-    await env.M2rayNG.put('warpConfigs', JSON.stringify(warpConfigs));
+    await env.bpb.put('warpConfigs', JSON.stringify(warpConfigs));
 }
 
 async function buildWarpOutbounds (env, client, proxySettings, warpConfigs) {
     let warpOutbounds = [];
     const { 
 		warpEndpoints, 
-		M2rayNGNoiseMode, 
+		nikaNGNoiseMode, 
 		hiddifyNoiseMode, 
 		noiseCountMin, 
 		noiseCountMax, 
@@ -2847,10 +2846,10 @@ async function buildWarpOutbounds (env, client, proxySettings, warpConfigs) {
 
     warpEndpoints.split(',').forEach( (endpoint, index) => {
         
-        if (client === 'xray' || client === 'M2rayNG') {
+        if (client === 'xray' || client === 'nikang') {
             let xrayOutbound = buildXrayWarpOutbound(`warp-${index + 1}`, warpIPv6, privateKey, publicKey, endpoint, reserved, '');
-            client === 'M2rayNG' && Object.assign(xrayOutbound.settings, {
-                wnoise: M2rayNGNoiseMode,
+            client === 'nikang' && Object.assign(xrayOutbound.settings, {
+                wnoise: nikaNGNoiseMode,
                 wnoisecount: fakePackets,
                 wpayloadsize: wPayloadSize,
                 wnoisedelay: wNoiseDelay
@@ -2861,7 +2860,7 @@ async function buildWarpOutbounds (env, client, proxySettings, warpConfigs) {
 
         if (client === 'singbox' || client === 'hiddify') {
             let singboxOutbound = buildSingboxWarpOutbound(
-                client === 'hiddify' ? `⚫ Warp Pro ${index + 1} 🇮🇷` : `⚪ Warp ${index + 1} 🇮🇷`, 
+                client === 'hiddify' ? `💦 Warp Pro ${index + 1} 🇮🇷` : `💦 Warp ${index + 1} 🇮🇷`, 
                 warpIPv6, 
                 privateKey, 
                 publicKey, 
@@ -2881,7 +2880,7 @@ async function buildWarpOutbounds (env, client, proxySettings, warpConfigs) {
         }
 
         if (client === 'clash') {
-            let clashOutbound = buildClashWarpOutbound(`⚫ Warp ${index + 1} 🇮🇷`, warpIPv6, privateKey, publicKey, endpoint, reserved, '');
+            let clashOutbound = buildClashWarpOutbound(`💦 Warp ${index + 1} 🇮🇷`, warpIPv6, privateKey, publicKey, endpoint, reserved, '');
             warpOutbounds.push(clashOutbound);
         }
 
@@ -2894,7 +2893,7 @@ async function buildWoWOutbounds (env, client, proxySettings, warpConfigs) {
     let wowOutbounds = [];
     const { 
 		wowEndpoint, 
-		M2rayNGNoiseMode, 
+		nikaNGNoiseMode, 
 		hiddifyNoiseMode, 
 		noiseCountMin, 
 		noiseCountMax, 
@@ -2914,7 +2913,7 @@ async function buildWoWOutbounds (env, client, proxySettings, warpConfigs) {
             const wPayloadSize = noiseSizeMin === noiseSizeMax ? noiseSizeMin : `${noiseSizeMin}-${noiseSizeMax}`;
             const wNoiseDelay = noiseDelayMin === noiseDelayMax ? noiseDelayMin : `${noiseDelayMin}-${noiseDelayMax}`;
 
-            if (client === 'xray' || client === 'M2rayNG') {
+            if (client === 'xray' || client === 'nikang') {
                 let xrayOutbound = buildXrayWarpOutbound(
                     i === 1 ? `warp-ir_${index + 1}` : `warp-out_${index + 1}`, 
                     warpIPv6, 
@@ -2925,8 +2924,8 @@ async function buildWoWOutbounds (env, client, proxySettings, warpConfigs) {
                     i === 1 ? '' : `warp-ir_${index + 1}`
                 );
 
-                (client === 'M2rayNG' && i === 1) && Object.assign(xrayOutbound.settings, {
-                    wnoise: M2rayNGNoiseMode,
+                (client === 'nikang' && i === 1) && Object.assign(xrayOutbound.settings, {
+                    wnoise: nikaNGNoiseMode,
                     wnoisecount: fakePackets,
                     wpayloadsize: wPayloadSize,
                     wnoisedelay: wNoiseDelay
@@ -2938,16 +2937,16 @@ async function buildWoWOutbounds (env, client, proxySettings, warpConfigs) {
             if (client === 'singbox' || client === 'hiddify') {
                 let singboxOutbound = buildSingboxWarpOutbound(
                     i === 1
-                    ? `⚫️ Nothing ${index + 1}` 
+                    ? `warp-ir_${index + 1}` 
                     : client === 'hiddify' 
-                        ? `⚪ WoW Pro ${index + 1}` 
-                        : `⚫️ WoW ${index + 1} ` , 
+                        ? `💦 WoW Pro ${index + 1} 🌍` 
+                        : `💦 WoW ${index + 1} 🌍` , 
                     warpIPv6, 
                     privateKey, 
                     publicKey, 
                     endpoint, 
                     reserved, 
-                    i === 0 ? `⚫️ Nothing ${index + 1}` : ''
+                    i === 0 ? `warp-ir_${index + 1}` : ''
                 );
                 
                 (client === 'hiddify' && i === 1) && Object.assign(singboxOutbound, {
@@ -2962,13 +2961,13 @@ async function buildWoWOutbounds (env, client, proxySettings, warpConfigs) {
 
             if (client === 'clash') {
                 let clashOutbound = buildClashWarpOutbound(
-                    i === 1 ? `⚫️ Nothing ${index + 1}` : `⚪ WoW ${index + 1} `, 
+                    i === 1 ? `warp-ir_${index + 1}` : `💦 WoW ${index + 1} 🌍`, 
                     warpIPv6, 
                     privateKey, 
                     publicKey, 
                     endpoint,
                     reserved, 
-                    i === 0 ? `⚫️ Nothing ${index + 1}` : ''
+                    i === 0 ? `warp-ir_${index + 1}` : ''
                 );
 
                 wowOutbounds.push(clashOutbound);
@@ -2978,6 +2977,7 @@ async function buildWoWOutbounds (env, client, proxySettings, warpConfigs) {
 
     return wowOutbounds;
 }
+
 async function buildXrayDNSObject (remoteDNS, localDNS, blockAds, bypassIran, bypassChina, blockPorn, isWorkerLess, outboundAddresses) {
 
     const dohPattern = /^(?:[a-zA-Z]+:\/\/)?([^:\/\s?]+)/;
@@ -3412,7 +3412,7 @@ async function buildWorkerLessConfig(env, client) {
     let proxySettings = {};
 
     try {
-        proxySettings = await env.M2rayNG.get("proxySettings", {type: 'json'});
+        proxySettings = await env.bpb.get("proxySettings", {type: 'json'});
     } catch (error) {
         console.log(error);
         throw new Error(`An error occurred while generating WorkerLess config - ${error}`);
@@ -3438,7 +3438,7 @@ async function buildWorkerLessConfig(env, client) {
     fakeOutbound.streamSettings.wsSettings.path = '/';
 
     let fragConfig = structuredClone(xrayConfigTemp);
-    fragConfig.remarks  = '� M2rayNG F - WorkerLess ⭐'
+    fragConfig.remarks  = '💦 BPB F - WorkerLess ⭐'
     fragConfig.dns = await buildXrayDNSObject('https://cloudflare-dns.com/dns-query', localDNS, blockAds, bypassIran, bypassChina, blockPorn, true);
     fragConfig.outbounds[0].settings.domainStrategy = 'UseIP';
     fragConfig.outbounds[0].settings.fragment.length = `${lengthMin}-${lengthMax}`;
@@ -3469,7 +3469,7 @@ async function getNormalConfigs(env, hostName, client) {
     let chainProxy = '';
 
     try {
-        proxySettings = await env.M2rayNG.get("proxySettings", {type: 'json'});
+        proxySettings = await env.bpb.get("proxySettings", {type: 'json'});
     } catch (error) {
         console.log(error);
         throw new Error(`An error occurred while getting normal configs - ${error}`);
@@ -3504,7 +3504,7 @@ async function getNormalConfigs(env, hostName, client) {
     });
 
     if (outProxy) {
-        let chainRemark = `#${encodeURIComponent('� Chain proxy 🔗')}`;
+        let chainRemark = `#${encodeURIComponent('💦 Chain proxy 🔗')}`;
         if (outProxy.startsWith('socks') || outProxy.startsWith('http')) {
             const regex = /^(?:socks|http):\/\/([^@]+)@/;
             const userPass = outProxy.match(regex)[1];
@@ -3525,12 +3525,12 @@ async function getFragmentConfigs(env, hostName, client) {
     let proxySettings = {};
     let proxyOutbound;
     let proxyIndex = 1;
-    const bestFragValues = [1-3', '3-8', '5-10', '10-20', '20-30', '30-40', '40-50', 
-        '50-60', '60-70', '70-80', '80-90', '90-100', '50-100', '10-30', '20-40', '30-50',
-        '30-60', '40-60', '499', '50-70', '60-80', '1403', '70-90', '80-100', '100-200'];
+    const bestFragValues = ['10-20', '20-30', '30-40', '40-50', '50-60', '60-70', 
+                            '70-80', '80-90', '90-100', '10-30', '20-40', '30-50', 
+                            '40-60', '50-70', '60-80', '70-90', '80-100', '100-200'];
 
     try {
-        proxySettings = await env.M2rayNG.get("proxySettings", {type: 'json'});
+        proxySettings = await env.bpb.get("proxySettings", {type: 'json'});
     } catch (error) {
         console.log(error);
         throw new Error(`An error occurred while getting fragment configs - ${error}`);
@@ -3568,7 +3568,7 @@ async function getFragmentConfigs(env, hostName, client) {
         } catch (error) {
             console.log('An error occured while parsing chain proxy: ', error);
             proxyOutbound = undefined;
-            await env.M2rayNG.put("proxySettings", JSON.stringify({
+            await env.bpb.put("proxySettings", JSON.stringify({
                 ...proxySettings, 
                 outProxy: '',
                 outProxyParams: ''
@@ -3649,7 +3649,7 @@ async function getFragmentConfigs(env, hostName, client) {
         ? [...Addresses, proxyParams.hostName || proxyParams.host, 'www.gstatic.com'] 
         : [...Addresses, 'www.gstatic.com'];
     let bestPing = structuredClone(xrayConfigTemp);
-    bestPing.remarks = '� M2rayNG F - Best Ping 💥';
+    bestPing.remarks = '💦 BPB F - Best Ping 💥';
     bestPing.dns = await buildXrayDNSObject(remoteDNS, localDNS, blockAds, bypassIran, bypassChina, blockPorn, false, outboundAddresses);
     bestPing.outbounds[0].settings.fragment.length = `${lengthMin}-${lengthMax}`;
     bestPing.outbounds[0].settings.fragment.interval = `${intervalMin}-${intervalMax}`;
@@ -3674,7 +3674,7 @@ async function getFragmentConfigs(env, hostName, client) {
         ? [hostName, proxyParams.hostName || proxyParams.host, 'www.gstatic.com'] 
         : [hostName, 'www.gstatic.com'];
     let bestFragment = structuredClone(xrayConfigTemp);
-    bestFragment.remarks = '� M2rayNG F - Best Fragment 😎';
+    bestFragment.remarks = '💦 BPB F - Best Fragment 😎';
     bestFragment.dns = await buildXrayDNSObject(remoteDNS, localDNS, blockAds, bypassIran, bypassChina, blockPorn, false, outboundAddresses);
     bestFragment.outbounds.splice(0,1);
     bestFragValues.forEach( (fragLength, index) => {
@@ -3739,8 +3739,8 @@ async function getXrayWarpConfigs (env, client) {
     let xrayWoWConfigTemp = structuredClone(xrayConfigTemp);
     
     try {
-        proxySettings = await env.M2rayNG.get("proxySettings", {type: 'json'});
-        warpConfigs = await env.M2rayNG.get('warpConfigs', {type: 'json'});
+        proxySettings = await env.bpb.get("proxySettings", {type: 'json'});
+        warpConfigs = await env.bpb.get('warpConfigs', {type: 'json'});
     } catch (error) {
         console.log(error);
         throw new Error(`An error occurred while getting fragment configs - ${error}`);
@@ -3756,7 +3756,7 @@ async function getXrayWarpConfigs (env, client) {
     xrayWarpConfig.routing.rules[xrayWarpConfig.routing.rules.length - 1].outboundTag = 'warp';
     delete xrayWarpConfig.observatory;
     delete xrayWarpConfig.routing.balancers;
-    xrayWarpBestPing.remarks = client === 'M2rayNG' ? '� M2rayNG - Warp Pro Best Ping 🚀' : '� M2rayNG - Warp Best Ping 🚀';
+    xrayWarpBestPing.remarks = client === 'nikang' ? '💦 BPB - Warp Pro Best Ping 🚀' : '💦 BPB - Warp Best Ping 🚀';
     xrayWarpBestPing.dns = await buildXrayDNSObject('1.1.1.1', localDNS, blockAds, bypassIran, bypassChina, blockPorn, false);
     xrayWarpBestPing.routing.rules = buildXrayRoutingRules(localDNS, blockAds, bypassIran, blockPorn, bypassLAN, bypassChina, blockUDP443, false, true, false, true);
     xrayWarpBestPing.outbounds.splice(0,1);
@@ -3771,7 +3771,7 @@ async function getXrayWarpConfigs (env, client) {
     xrayWarpOutbounds.forEach((outbound, index) => {
         xrayWarpConfigs.push({
             ...xrayWarpConfig,
-            remarks: client === 'M2rayNG' ? `� M2rayNG - Warp Pro ${index + 1} 🇮🇷` : `� M2rayNG - Warp ${index + 1} 🇮🇷`,
+            remarks: client === 'nikang' ? `💦 BPB - Warp Pro ${index + 1} 🇮🇷` : `💦 BPB - Warp ${index + 1} 🇮🇷`,
             outbounds: [{...outbound, tag: 'warp'}, ...xrayWarpConfig.outbounds]
         });
     });
@@ -3779,7 +3779,7 @@ async function getXrayWarpConfigs (env, client) {
     xrayWoWOutbounds.forEach((outbound, index) => {
         if (outbound.tag.includes('warp-out')) {
             let xrayWoWConfig = structuredClone(xrayWoWConfigTemp);
-            xrayWoWConfig.remarks = client === 'M2rayNG' ? `� M2rayNG - WoW Pro ${index/2 + 1} 🌍` : `� M2rayNG - WoW ${index/2 + 1} 🌍`;
+            xrayWoWConfig.remarks = client === 'nikang' ? `💦 BPB - WoW Pro ${index/2 + 1} 🌍` : `💦 BPB - WoW ${index/2 + 1} 🌍`;
             xrayWoWConfig.outbounds = [{...xrayWoWOutbounds[index]}, {...xrayWoWOutbounds[index + 1]}, ...xrayWoWConfig.outbounds];
             xrayWoWConfig.routing.rules[xrayWoWConfig.routing.rules.length - 1].outboundTag = outbound.tag;
             xrayWarpConfigs.push(xrayWoWConfig);
@@ -3787,7 +3787,7 @@ async function getXrayWarpConfigs (env, client) {
     });
 
     let xrayWoWBestPing = structuredClone(xrayWarpBestPing);
-    xrayWoWBestPing.remarks = client === 'M2rayNG' ? '� M2rayNG - WoW Pro Best Ping 🚀' : '� M2rayNG - WoW Best Ping 🚀';
+    xrayWoWBestPing.remarks = client === 'nikang' ? '💦 BPB - WoW Pro Best Ping 🚀' : '💦 BPB - WoW Best Ping 🚀';
     xrayWoWBestPing.routing.balancers[0].selector = ['warp-out'];
     xrayWoWBestPing.observatory.subjectSelector = ['warp-out'];
     xrayWarpBestPing.outbounds = [...xrayWarpOutbounds, ...xrayWarpBestPing.outbounds];
@@ -3951,7 +3951,7 @@ function buildClashChainOutbound(chainProxyParams) {
 
     const { hostName, port, uuid, flow, security, type, sni, fp, alpn, pbk, sid, spx, headerType, host, path, authority, serviceName, mode } = chainProxyParams;
     let chainOutbound = {
-        "name": "� Chain Best Ping 💥",
+        "name": "💦 Chain Best Ping 💥",
         "type": "vless",
         "server": hostName,
         "port": +port,
@@ -3959,7 +3959,7 @@ function buildClashChainOutbound(chainProxyParams) {
         "uuid": uuid,
         "flow": flow,
         "network": type,
-        "dialer-proxy": "� Best Ping 💥"
+        "dialer-proxy": "💦 Best Ping 💥"
     };
 
     if (security === 'tls') {
@@ -4025,8 +4025,8 @@ async function getClashConfig (env, hostName, isWarp) {
     let chainProxyOutbound;
 
     try {
-        proxySettings = await env.M2rayNG.get("proxySettings", {type: 'json'});
-        warpConfigs = await env.M2rayNG.get('warpConfigs', {type: 'json'});
+        proxySettings = await env.bpb.get("proxySettings", {type: 'json'});
+        warpConfigs = await env.bpb.get('warpConfigs', {type: 'json'});
     } catch (error) {
         console.log(error);
         throw new Error(`An error occurred while getting sing-box configs - ${error}`);
@@ -4044,7 +4044,7 @@ async function getClashConfig (env, hostName, isWarp) {
         } catch (error) {
             console.log('An error occured while parsing chain proxy: ', error);
             chainProxyOutbound = undefined;
-            await env.M2rayNG.put("proxySettings", JSON.stringify({
+            await env.bpb.put("proxySettings", JSON.stringify({
                 ...proxySettings, 
                 outProxy: '',
                 outProxyParams: ''
@@ -4146,11 +4146,11 @@ async function getClashConfig (env, hostName, isWarp) {
                 "name": "✅ Selector",
                 "type": "select",
                 "proxies": isWarp
-                    ? ['� Warp Best Ping 🚀', '� WoW Best Ping 🚀', ...warpOutboundsRemarks, ...wowOutboundRemarks ]
-                    : ['� Best Ping 💥', ...outboundsRemarks ]
+                    ? ['💦 Warp Best Ping 🚀', '💦 WoW Best Ping 🚀', ...warpOutboundsRemarks, ...wowOutboundRemarks ]
+                    : ['💦 Best Ping 💥', ...outboundsRemarks ]
             },
             {
-                "name": isWarp ? `� Warp Best Ping 🚀`: `� Best Ping 💥`,
+                "name": isWarp ? `💦 Warp Best Ping 🚀`: `💦 Best Ping 💥`,
                 "type": "url-test",
                 "url": "https://www.gstatic.com/generate_204",
                 "interval": 30,
@@ -4162,7 +4162,7 @@ async function getClashConfig (env, hostName, isWarp) {
     };
 
     isWarp && config["proxy-groups"].push({
-        "name": "� WoW Best Ping 🚀",
+        "name": "💦 WoW Best Ping 🚀",
         "type": "url-test",
         "url": "https://www.gstatic.com/generate_204",
         "interval": 30,
@@ -4561,8 +4561,8 @@ async function getSingboxConfig (env, hostName, client, isWarp) {
     const domainRegex = /^(?!:\/\/)([a-zA-Z0-9-]{1,63}\.)*[a-zA-Z0-9][a-zA-Z0-9-]{0,62}\.[a-zA-Z]{2,11}$/;
     
     try {
-        proxySettings = await env.M2rayNG.get("proxySettings", {type: 'json'});
-        warpConfigs = await env.M2rayNG.get('warpConfigs', {type: 'json'});
+        proxySettings = await env.bpb.get("proxySettings", {type: 'json'});
+        warpConfigs = await env.bpb.get('warpConfigs', {type: 'json'});
     } catch (error) {
         console.log(error);
         throw new Error(`An error occurred while getting sing-box configs - ${error}`);
@@ -4580,7 +4580,7 @@ async function getSingboxConfig (env, hostName, client, isWarp) {
         } catch (error) {
             console.log('An error occured while parsing chain proxy: ', error);
             chainProxyOutbound = undefined;
-            await env.M2rayNG.put("proxySettings", JSON.stringify({
+            await env.bpb.put("proxySettings", JSON.stringify({
                 ...proxySettings, 
                 outProxy: '',
                 outProxyParams: ''
@@ -4599,15 +4599,15 @@ async function getSingboxConfig (env, hostName, client, isWarp) {
         const WOWOutbounds = await buildWoWOutbounds(env, client, proxySettings, warpConfigs);
         config.dns.servers[0].address = '1.1.1.1';
         config.outbounds[0].outbounds = client === 'hiddify'
-            ? ["� Warp Pro Best Ping 🚀", "� WoW Pro Best Ping 🚀"]
-            : ["� Warp Best Ping 🚀", "� WoW Best Ping 🚀"];
+            ? ["💦 Warp Pro Best Ping 🚀", "💦 WoW Pro Best Ping 🚀"]
+            : ["💦 Warp Best Ping 🚀", "💦 WoW Best Ping 🚀"];
         config.outbounds.splice(2, 0, structuredClone(config.outbounds[1]));
         config.outbounds[1].tag = client === 'hiddify' 
-            ? "� Warp Pro Best Ping 🚀"
-            : "� Warp Best Ping 🚀";
+            ? "💦 Warp Pro Best Ping 🚀"
+            : "💦 Warp Best Ping 🚀";
         config.outbounds[2].tag = client === 'hiddify'
-            ? "� WoW Pro Best Ping 🚀"
-            : "� WoW Best Ping 🚀";
+            ? "💦 WoW Pro Best Ping 🚀"
+            : "💦 WoW Best Ping 🚀";
         config.outbounds.push(...warpOutbounds, ...WOWOutbounds);
         warpOutbounds.forEach(outbound => {
             config.outbounds[0].outbounds.push(outbound.tag);
@@ -4804,7 +4804,7 @@ const singboxConfigTemp = {
                 address: "",
                 address_resolver: "dns-direct",
                 strategy: "prefer_ipv4",
-                detour: "� Best Ping 💥",
+                detour: "💦 Best Ping 💥",
                 tag: "dns-remote"
             },
             {
@@ -4856,11 +4856,11 @@ const singboxConfigTemp = {
         {
             type: "selector",
             tag: "proxy",
-            outbounds: ["� Best Ping 💥"]
+            outbounds: ["💦 Best Ping 💥"]
         },
         {
             type: "urltest",
-            tag: "� Best Ping 💥",
+            tag: "💦 Best Ping 💥",
             outbounds: [],
             url: "https://www.gstatic.com/generate_204",
             interval: "30s",
